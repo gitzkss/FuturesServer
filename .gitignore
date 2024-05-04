@@ -1,0 +1,17 @@
+*.xml
+*.log
+x64/
+.vs/
+.vscode/
+*.sln
+*.vcxproj
+*.filters
+*.user
+*.exe
+*.dll
+*.obj
+*.suo
+*.opensdf
+client
+server
+
