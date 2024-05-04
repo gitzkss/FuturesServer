@@ -18,10 +18,7 @@ CuoHeServer::CuoHeServer(double kaipanPrice, double zhangTingPrice, double dieTi
 	sell.push_back(wt);
 };
 
-CuoHeServer::~CuoHeServer() 
-{
-
-};
+CuoHeServer::~CuoHeServer() {};
 
 void CuoHeServer::addBuy(WeiTuo wt)
 {
@@ -301,6 +298,9 @@ void CuoHeServer::updateBS()
 
 void CuoHeServer::print(JiaoYiData data)
 {
+	jiaoYiDataQueue.push(data);
+	if (jiaoYiDataQueue.size() > 10)
+		jiaoYiDataQueue.pop();
 	//打印成交信息
 	std::cout << "time:" <<'\n'
 		<< data.getTime() <<'\n'
@@ -494,7 +494,7 @@ void CuoHeServer::updateState(double price)
 	zhangDieFu = (int)(zhangDieFu * 100 + 0.5) / 100.0;
 }
 
-int CuoHeServer::verdict(WeiTuo wt, CustomerInfo* cinfo)
+bool CuoHeServer::verdict(WeiTuo wt, CustomerInfo* cinfo)
 {
 	int price = wt.getPrice();
 	if (wt.getCount() >= 0 && (price > zhangTingPrice || price < dieTingPrice))
@@ -707,6 +707,7 @@ JiaoYiData CuoHeServer::getJiaoYiData(double price, int type, int duokai, int ko
 	}
 	return result;
 }
+
 std::map<std::string, std::string> CuoHeServer::getPankou()
 {
 	std::map<std::string, std::string>res;
@@ -723,7 +724,24 @@ std::map<std::string, std::string> CuoHeServer::getPankou()
 	res["waiPan"] = std::to_string(waiPan);
 	res["neiPan"] = std::to_string(neiPan);
 	res["zhangDieFu"] = std::to_string(zhangDieFu);
+	std::queue<JiaoYiData> temp = jiaoYiDataQueue;
+	int i = 1;
+	while (!temp.empty())
+	{
+		JiaoYiData data = temp.front();
+		res["time" + std::to_string(i)] = std::to_string(data.getTime());
+		res["price" + std::to_string(i)] = std::to_string((int)data.getPrice());
+		res["optype" + std::to_string(i)] = data.getOptype();
+		res["count" + std::to_string(i)] = std::to_string(data.getCount());
+		res["color" + std::to_string(i)] = std::to_string(data.getColor());
+		temp.pop();
+		i++;
+	}
 	return res;
 }
 
+std::queue<JiaoYiData> CuoHeServer::getJiaoYiDataQueue()
+{
+	return jiaoYiDataQueue;
+}
 
