@@ -8,7 +8,7 @@ private:
 	double price;
 	std::string optype;
 	int count;
-	//0:ÂÌÉ« 1:ºìÉ«
+	//0:?? 1:??
 	int color;
 public:
 	JiaoYiData(time_t time = 0, double price = -1, std::string optype = "", int count = -1,int color = 1);

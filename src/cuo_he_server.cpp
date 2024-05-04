@@ -25,10 +25,10 @@ CuoHeServer::~CuoHeServer()
 
 void CuoHeServer::addBuy(WeiTuo wt)
 {
-	//wt�ļ۸�����buy vector�����ֲ������򣬵�0��Ԫ�ز��������򣬰��ռ۸�ߴӵ�������
-	//�ҵ���һ���۸�С��wt�ļ۸��Ԫ�ص�λ��,���뵽����ǰ��
-	//����Ҳ���������Ԫ�أ����뵽���
-	//vectorԪ���±�ԽС֤�����ȼ�Խ�ߣ��۸�Խ�����ȼ�Խ�ߣ�ʱ��Խ�����ȼ�Խ��
+	//wt的价格对类的buy vector作二分插入排序，第0个元素不参与排序，按照价格高从到低排序
+	//找到第一个价格小于wt的价格的元素的位置,插入到它的前面
+	//如果找不到这样的元素，插入到最后
+	//vector元素下标越小证明优先级越高，价格越高优先级越高，时间越早优先级越高
 	int low = 1;
 	int high = buy.size() - 1;
 	int mid;
@@ -60,9 +60,9 @@ void CuoHeServer::addBuy(WeiTuo wt)
 
 void CuoHeServer::addSell(WeiTuo wt)
 {
-	//wt�ļ۸�����sell vector�����ֲ������򣬵�0��Ԫ�ز��������򣬰��ռ۸�ʹӵ�������
-	//�ҵ���һ���۸����wt�ļ۸��Ԫ�أ����߼۸����ʱ��������Ԫ�أ����뵽����ǰ��
-	//����Ҳ���������Ԫ�أ����뵽���
+	//wt的价格对类的sell vector作二分插入排序，第0个元素不参与排序，按照价格低从到高排序
+	//找到第一个价格大于wt的价格的元素，或者价格相等时间比它早的元素，插入到它的前面
+	//如果找不到这样的元素，插入到最后
 	int low = 1;
 	int high = sell.size() - 1;
 	int mid;
@@ -94,7 +94,7 @@ void CuoHeServer::addSell(WeiTuo wt)
 
 int CuoHeServer::removeBuy(WeiTuo wt)
 {
-	//wt�ļ۸�����buy vector�����ֲ��ң��ҵ��Ͳ��������ֶ���ȫ��ͬ��Ԫ�أ�ɾ����������ҵ�����1���򷵻�0
+	//wt的价格对类的buy vector作二分查找，找到和参数所有字段完全相同的元素，删除它。如果找到返回1否则返回0
 	int low = 1;
 	int high = buy.size() - 1;
 	int mid;
@@ -145,7 +145,7 @@ bool CuoHeServer::match(WeiTuo wt)
 	int duoping = 0;
 	int kongkai = 0;
 	int kongping = 0;
-	//type=1����Ϊ�࿪��type=2Ϊ�տ���type=3Ϊ��ƽ��type=4Ϊ��ƽ
+	//type=1主动为多开，type=2为空开，type=3为多平，type=4为空平
 	int type;
 	if (wt.getOptype() == "duokai")
 		type = 1;
@@ -165,14 +165,14 @@ bool CuoHeServer::match(WeiTuo wt)
 		price = sell[1].getPrice();
 		if (buy[1].getCount() > sell[1].getCount())
 		{
-			//�ɽ���
+			//成交额
 			WeiTuo temp = sell[1];
-			//��ϳɹ���������ͻ�
+			//撮合成功，报告给客户
 			accepted(&sell[1], temp.getPrice(), temp.getCount());
 			accepted(&buy[1], temp.getPrice(), temp.getCount());
 			if (type == 1 || type == 4)
 			{
-				//�������������
+				//如果是主动买入
 				if (sell[1].getOptype() == "kongkai")
 					kongkai += temp.getCount();
 				else
@@ -180,7 +180,7 @@ bool CuoHeServer::match(WeiTuo wt)
 			}
 			else
 			{
-				//�������������
+				//如果是主动卖出
 				if (buy[1].getOptype() == "duokai")
 					duokai += temp.getCount();
 				else
@@ -190,14 +190,14 @@ bool CuoHeServer::match(WeiTuo wt)
 		}
 		else if (buy[1].getCount() < sell[1].getCount())
 		{
-			//�ɽ���
+			//成交额
 			WeiTuo temp = buy[1];
-			//��ϳɹ���������ͻ�
+			//撮合成功，报告给客户
 			accepted(&sell[1], temp.getPrice(), temp.getCount());
 			accepted(&buy[1], temp.getPrice(), temp.getCount());
 			if (type == 1 || type == 4)
 			{
-				//�������������
+				//如果是主动买入
 				if (sell[1].getOptype() == "kongkai")
 					kongkai += temp.getCount();
 				else
@@ -205,7 +205,7 @@ bool CuoHeServer::match(WeiTuo wt)
 			}
 			else
 			{
-				//�������������
+				//如果是主动卖出
 				if (buy[1].getOptype() == "duokai")
 					duokai += temp.getCount();
 				else
@@ -215,11 +215,11 @@ bool CuoHeServer::match(WeiTuo wt)
 		}
 		else
 		{
-			//�ɽ���
+			//成交额
 			WeiTuo temp = buy[1];
 			if (type == 1 || type == 4)
 			{
-				//�������������
+				//如果是主动买入
 				if (sell[1].getOptype() == "kongkai")
 					kongkai += temp.getCount();
 				else
@@ -227,13 +227,13 @@ bool CuoHeServer::match(WeiTuo wt)
 			}
 			else
 			{
-				//�������������
+				//如果是主动卖出
 				if (buy[1].getOptype() == "duokai")
 					duokai += temp.getCount();
 				else
 					kongping += temp.getCount();
 			}
-			//��ϳɹ���������ͻ�
+			//撮合成功，报告给客户
 			accepted(&sell[1], temp.getPrice(), temp.getCount());
 			accepted(&buy[1], temp.getPrice(), temp.getCount());
 			buy.erase(buy.begin() + 1);
@@ -257,7 +257,7 @@ bool CuoHeServer::match(WeiTuo wt)
 		print(result);
 		if (wt.getCount() > count)
 		{
-			//����ɽ�����С��ί��������ʣ��Ĺҵ�
+			//如果成交数量小于委托数量，剩余的挂单
 			wt.setCount(wt.getCount() - count);
 			if (type == 1 || type == 4)
 			{
@@ -301,7 +301,7 @@ void CuoHeServer::updateBS()
 
 void CuoHeServer::print(JiaoYiData data)
 {
-	//��ӡ�ɽ���Ϣ
+	//打印成交信息
 	std::cout << "time:" <<'\n'
 		<< data.getTime() <<'\n'
 		<< "price:" << data.getPrice() <<'\n'
@@ -315,7 +315,7 @@ void CuoHeServer::executeWeiTuoQueue()
 	while (!weiTuoQueue.empty())
 	{
 		WeiTuo wt = weiTuoQueue.front();
-		//������������
+		//负数代表撤单
 		if (wt.getCount() < 0)
 		{
 			wt.setCount(-wt.getCount());
@@ -343,7 +343,7 @@ void CuoHeServer::executeWeiTuoQueue()
 
 int CuoHeServer::removeSell(WeiTuo wt)
 {
-	//wt�ļ۸�����sell vector�����ֲ��ң��ҵ��Ͳ��������ֶ���ȫ��ͬ��Ԫ�أ�ɾ����������ҵ�����1���򷵻�0
+	//wt的价格对类的sell vector作二分查找，找到和参数所有字段完全相同的元素，删除它。如果找到返回1否则返回0
 	int low = 1;
 	int high = sell.size() - 1;
 	int mid;
@@ -389,7 +389,7 @@ int CuoHeServer::removeSell(WeiTuo wt)
 
 int CuoHeServer::findBuyCount(double price)
 {
-	//�����ҵ����buy vector�м۸����price������Ԫ�ص�count�ĺ�
+	//二分找到类的buy vector中价格等于price的所有元素的count的和
 	int low = 1;
 	int high = buy.size() - 1;
 	int mid;
@@ -428,7 +428,7 @@ int CuoHeServer::findBuyCount(double price)
 
 int CuoHeServer::findSellCount(double price)
 {
-	//�����ҵ����sell vector�м۸����price������Ԫ�ص�count�ĺ�
+	//二分找到类的sell vector中价格等于price的所有元素的count的和
 	int low = 1;
 	int high = sell.size() - 1;
 	int mid;
@@ -621,21 +621,21 @@ WeiTuo CuoHeServer::accepted(WeiTuo* wt, double price, int count)
 }
 
 
-//type=1����Ϊ�࿪��type=2Ϊ�տ���type=3Ϊ��ƽ��type=4Ϊ��ƽ
-//ƥ��ɹ��������࿪�͹ҵ��Ŀտ����������resultΪ��ɫ˫��
-//ƥ��ɹ��������տ��͹ҵ��Ķ࿪���������resultΪ��ɫ˫��
+//type=1主动为多开，type=2为空开，type=3为多平，type=4为空平
+//匹配成功的主动多开和挂单的空开数量相等则result为红色双开
+//匹配成功的主动空开和挂单的多开数量相等则result为绿色双开
 // 
-//ƥ��ɹ��������࿪�͹ҵ��Ķ�ƽ���������resultΪ��ɫ�໻
-//ƥ��ɹ��������տ��͹ҵ��Ŀ�ƽ���������resultΪ��ɫ�ջ�
+//匹配成功的主动多开和挂单的多平数量相等则result为红色多换
+//匹配成功的主动空开和挂单的空平数量相等则result为绿色空换
 // 
-//ƥ��ɹ��������࿪����Ϊ�ҵ��Ŀտ�+��ƽ��resultΪ��ɫ�࿪
-//ƥ��ɹ��������տ�����Ϊ�ҵ��Ķ࿪+��ƽ��resultΪ��ɫ�տ�
+//匹配成功的主动多开数量为挂单的空开+多平则result为红色多开
+//匹配成功的主动空开数量为挂单的多开+空平则result为绿色空开
 // 
-//ƥ��ɹ���������ƽ�͹ҵ��Ŀ�ƽ���������resultΪ��ɫ˫ƽ
-//ƥ��ɹ���������ƽ�͹ҵ��Ķ�ƽ���������resultΪ��ɫ˫ƽ
+//匹配成功的主动多平和挂单的空平数量相等则result为绿色双平
+//匹配成功的主动空平和挂单的多平数量相等则result为红色双平
 // 
-//ƥ��ɹ���������ƽ����Ϊ�ҵ��Ŀ�ƽ+�࿪��resultΪ��ɫ��ƽ
-//ƥ��ɹ���������ƽ����Ϊ�ҵ��Ķ�ƽ+�տ���resultΪ��ɫ��ƽ
+//匹配成功的主动多平数量为挂单的空平+多开则result为绿色多平
+//匹配成功的主动空平数量为挂单的多平+空开则result为红色空平
 JiaoYiData CuoHeServer::getJiaoYiData(double price, int type, int duokai, int kongkai, int duoping, int kongping, time_t time)
 {
 	JiaoYiData result;
@@ -643,63 +643,63 @@ JiaoYiData CuoHeServer::getJiaoYiData(double price, int type, int duokai, int ko
 	result.setCount(cnt);
 	result.setTime(time);
 	result.setPrice(price);
-	if (type == 1)//�࿪
+	if (type == 1)//多开
 	{
-		if (cnt == kongkai)	//��ɫ˫��
+		if (cnt == kongkai)	//红色双开
 		{
 			result.setOptype("shuangkai");
 			result.setColor(1);
 		}
-		else if (cnt == duoping)//��ɫ�໻
+		else if (cnt == duoping)//红色多换
 		{
 			result.setOptype("duohuan");
 			result.setColor(1);
 		}
-		else//��ɫ�࿪
+		else//红色多开
 		{
 			result.setOptype("duokai");
 			result.setColor(1);
 		}
 	}
-	if (type == 2)//�տ�
+	if (type == 2)//空开
 	{
-		if (cnt == duokai)//��ɫ˫��
+		if (cnt == duokai)//绿色双开
 		{
 			result.setOptype("shuangkai");
 			result.setColor(0);
 		}
-		else if (cnt == kongping)//��ɫ�ջ�
+		else if (cnt == kongping)//绿色空换
 		{
 			result.setOptype("konghuan");
 			result.setColor(0);
 		}
-		else//��ɫ�տ�
+		else//绿色空开
 		{
 			result.setOptype("kongkai");
 			result.setColor(0);
 		}
 	}
-	if (type == 3)//��ƽ
+	if (type == 3)//多平
 	{
-		if (cnt == kongping)//��ɫ˫ƽ
+		if (cnt == kongping)//绿色双平
 		{
 			result.setOptype("shuangping");
 			result.setColor(0);
 		}
-		else//��ɫ��ƽ
+		else//绿色多平
 		{
 			result.setOptype("duoping");
 			result.setColor(0);
 		}
 	}
-	if (type == 4)//��ƽ
+	if (type == 4)//空平
 	{
-		if (cnt == duoping)//��ɫ˫ƽ
+		if (cnt == duoping)//红色双平
 		{
 			result.setOptype("shuangping");
 			result.setColor(1);
 		}
-		else//��ɫ��ƽ
+		else//红色空平
 		{
 			result.setOptype("kongping");
 			result.setColor(1);
