@@ -159,80 +159,80 @@ bool CuoHeServer::match(WeiTuo wt)
 	while (buy.size() > 1 && sell.size() > 1 && buy[1].getPrice() >= sell[1].getPrice())
 	{
 		is_ok = 1;
-		price = sell[1].getPrice();
+		//price = sell[1].getPrice();
+		//成交额 假如新委托在买一，那么成交价为卖一价；反之如果新委托在卖一，那么成交价为买一
+		if (wt.getPrice() == buy[1].getPrice())
+			price = sell[1].getPrice();
+		else
+			price = buy[1].getPrice();
+
+		//撮合成功，报告给客户
+		int cnt = std::min(buy[1].getCount(), sell[1].getCount());
 		if (buy[1].getCount() > sell[1].getCount())
 		{
-			//成交额
-			WeiTuo temp = sell[1];
-			//撮合成功，报告给客户
-			accepted(&sell[1], temp.getPrice(), temp.getCount());
-			accepted(&buy[1], temp.getPrice(), temp.getCount());
+			accepted(&sell[1], price, cnt);
+			accepted(&buy[1], price, cnt);
 			if (type == 1 || type == 4)
 			{
 				//如果是主动买入
 				if (sell[1].getOptype() == "kongkai")
-					kongkai += temp.getCount();
+					kongkai += cnt;
 				else
-					duoping += temp.getCount();
+					duoping += cnt;
 			}
 			else
 			{
 				//如果是主动卖出
 				if (buy[1].getOptype() == "duokai")
-					duokai += temp.getCount();
+					duokai += cnt;
 				else
-					kongping += temp.getCount();
+					kongping += cnt;
 			}
 			sell.erase(sell.begin() + 1);
 		}
 		else if (buy[1].getCount() < sell[1].getCount())
 		{
-			//成交额
-			WeiTuo temp = buy[1];
-			//撮合成功，报告给客户
-			accepted(&sell[1], temp.getPrice(), temp.getCount());
-			accepted(&buy[1], temp.getPrice(), temp.getCount());
+			accepted(&sell[1], price, cnt);
+			accepted(&buy[1], price, cnt);
 			if (type == 1 || type == 4)
 			{
 				//如果是主动买入
 				if (sell[1].getOptype() == "kongkai")
-					kongkai += temp.getCount();
+					kongkai += cnt;
 				else
-					duoping += temp.getCount();
+					duoping += cnt;
 			}
 			else
 			{
 				//如果是主动卖出
 				if (buy[1].getOptype() == "duokai")
-					duokai += temp.getCount();
+					duokai += cnt;
 				else
-					kongping += temp.getCount();
+					kongping += cnt;
 			}
 			buy.erase(buy.begin() + 1);
 		}
 		else
 		{
-			//成交额
-			WeiTuo temp = buy[1];
 			if (type == 1 || type == 4)
 			{
 				//如果是主动买入
 				if (sell[1].getOptype() == "kongkai")
-					kongkai += temp.getCount();
+					kongkai += cnt;
 				else
-					duoping += temp.getCount();
+					duoping += cnt;
 			}
 			else
 			{
 				//如果是主动卖出
 				if (buy[1].getOptype() == "duokai")
-					duokai += temp.getCount();
+					duokai += cnt;
 				else
-					kongping += temp.getCount();
+					kongping += cnt;
 			}
 			//撮合成功，报告给客户
-			accepted(&sell[1], temp.getPrice(), temp.getCount());
-			accepted(&buy[1], temp.getPrice(), temp.getCount());
+			accepted(&sell[1], price, cnt);
+			accepted(&buy[1], price, cnt);
 			buy.erase(buy.begin() + 1);
 			sell.erase(sell.begin() + 1);
 		}
@@ -245,7 +245,7 @@ bool CuoHeServer::match(WeiTuo wt)
 	{
 		updateState(price);
 		count = duokai + duoping + kongkai + kongping;
-		if (type == 1 || type == 3)
+		if (type == 1 || type == 4)
 			waiPan += count;
 		else
 			neiPan += count;
