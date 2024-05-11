@@ -8,6 +8,7 @@ ChiCang::ChiCang(int id, int contractID, std::string contractName) :id(id), cont
 	kongSum = 0;
 	kepingduoCount = 0;
 	kepingkongCount = 0;
+	nowprice = 0;
 };
 ChiCang::~ChiCang() {};
 

@@ -2,25 +2,17 @@
 
 void  CustomerInfo::update(double newPrice,int pointPrice)
 {
-	std::stack<std::pair<double, int> > duo = chicang.getDuo();
-	std::stack<std::pair<double, int> > kong = chicang.getKong();
-	while (!duo.empty())
+	int duoCount = chicang.getDuoCount();
+	int kongCount = chicang.getKongCount();
+	if (chicang.nowprice == 0)
+		chicang.nowprice = newPrice;
+	else
 	{
-		double price = duo.top().first;
-		int cnt = duo.top().second;
-		double dis = newPrice - price;
-		quanyi += dis * cnt * pointPrice;
-		keyong += dis * cnt * pointPrice;
-		duo.pop();
-	}
-	while (!kong.empty())
-	{
-		double price = kong.top().first;
-		int cnt = kong.top().second;
-		double dis = price - newPrice;
-		quanyi += dis * cnt * pointPrice;
-		keyong += dis * cnt * pointPrice;
-		kong.pop();
+		int discnt = duoCount - kongCount;
+		double disp = (newPrice - chicang.nowprice) * discnt * pointPrice;
+		quanyi += disp;
+		keyong += disp;
+		chicang.nowprice = newPrice;
 	}
 	fengxianlv = 1.0 - keyong / quanyi;
 }

@@ -645,7 +645,7 @@ int CuoHeServer::accepted(WeiTuo* wt, double price, int count)
 {
 	//std::cout << "accepted: " << wt->getCustomerID() << " price:" << price << " count::" << count << std::endl;
 	CustomerInfo& c = customerMap[wt->getCustomerID()];
-	c.acceptWeiTuo(newPrice, pointPrice, baozhengjin, shouxufei, *wt, price, count);
+	c.acceptWeiTuo(price, pointPrice, baozhengjin, shouxufei, *wt, price, count);
 	int d = wt->getCount() - count;
 	if (d < 0)
 		wt->setCount(0);

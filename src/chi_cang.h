@@ -18,6 +18,7 @@ private:
 public:
 	ChiCang(int id = -1, int contractID = -1, std::string contractName="");
 	~ChiCang();
+	double nowprice;
 	std::stack<std::pair<double, int> > getDuo();
 	std::stack<std::pair<double, int> > getKong();
 	double getAvgDuo();
