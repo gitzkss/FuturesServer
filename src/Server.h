@@ -13,7 +13,6 @@ private:
     Acceptor *acceptor;
     CuoHeServer* chserver;
     std::map<int, Connection*> connections;
-
 public:
     Server(EventLoop*,CuoHeServer* _chserver);
     ~Server();

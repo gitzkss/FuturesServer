@@ -6,6 +6,8 @@
 #include"customer_info.h"
 #include"jiao_yi_data.h"
 #include"utils.h"
+#include <unistd.h>
+
 class CuoHeServer
 {
 private:
@@ -18,6 +20,9 @@ private:
 	double buyPrice;
 	//买一数量
 	int buyCount;
+	double shouxufei;
+	double baozhengjin;
+	double pointPrice;
 	double zhangTingPrice;
 	double dieTingPrice;
 	double maxPrice;
@@ -31,8 +36,11 @@ private:
 	std::queue<WeiTuo> weiTuoQueue;
 	std::queue<JiaoYiData> jiaoYiDataQueue;
 public:
-	CuoHeServer(double kaipanPrice, double zhangTingPrice, double dieTingPrice);
+	CuoHeServer(double kaipanPrice, double tingban,double baozhengjin,double shouxufei,double pointPrice);
 	~CuoHeServer();
+	std::map<int, CustomerInfo> customerMap;
+	std::map<int, int> idMap;
+	std::map<int, int> socketMap;
 	void addBuy(WeiTuo wt);
 	void addSell(WeiTuo wt);
 	int removeBuy(WeiTuo wt);
@@ -47,6 +55,8 @@ public:
 	void executeWeiTuoQueue();
 	//更新盘口的委托买卖价格和数量
 	void updateBS();
+	//获取客户委托队列以及个人信息
+	void getCustomerInfo(std::map<std::string, std::string>& res, int customerID);
 	double getKaiPanPrice();
 	double getNewPrice();
 	double getSellPrice();
@@ -65,11 +75,11 @@ public:
 	std::vector<WeiTuo> getBuy();
 	std::vector<WeiTuo> getSell();
 	std::queue<WeiTuo> getWeiTuoQueue();
-	bool verdict(WeiTuo wt, CustomerInfo* cinfo = nullptr);
+	std::string verdict(WeiTuo wt, int customerID);
 	//wt为成交委托,price为成交价格,count为成交数量
-	WeiTuo accepted(WeiTuo* wt, double price, int count);
+	int accepted(WeiTuo* wt, double price, int count);
 	//time为成交时间,price为成交价格,type为成交类型,duokai为多开,duoping为多平,kongkai为空开,kongping为空平数量
 	JiaoYiData getJiaoYiData(double price, int type, int duokai, int kongkai, int duoping, int kongping, time_t time = 0);
-	std::map<std::string, std::string> getPankou();
+	std::map<std::string, std::string> getPankou(int customerID);
 	std::queue<JiaoYiData> getJiaoYiDataQueue();
 };

@@ -3,7 +3,7 @@
 #include "src/cuo_he_server.h"
 int main() {
     EventLoop *loop = new EventLoop();
-    CuoHeServer* chserver = new CuoHeServer(1500,1600,1400);
+    CuoHeServer* chserver = new CuoHeServer(1500,0.1,5000,8,20);
     Server *server = new Server(loop,chserver);
     loop->loop();
     delete server;

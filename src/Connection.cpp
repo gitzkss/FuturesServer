@@ -1,7 +1,7 @@
 #include "Connection.h"
 
 
-#define READ_BUFFER 1024
+#define READ_BUFFER 2048
 
 Connection::Connection(EventLoop *_loop, Socket *_sock,CuoHeServer* _chserver,Server* _server) 
 : loop(_loop), sock(_sock), channel(nullptr),chServer(_chserver),server(_server){
@@ -49,7 +49,6 @@ void Connection::setDeleteConnectionCallback(std::function<void(Socket*)> _cb){
 void Connection::solve(int sockfd, std::string recv)
 {
     std::map<std::string,std::string> rec = deserializeMap(recv);
-    
     if(rec["op"]=="login")
         login(sockfd,rec);
     else if(rec["op"]=="weituo")
@@ -62,9 +61,14 @@ void Connection::solve(int sockfd, std::string recv)
 void Connection::login(int sockfd,std::map<std::string,std::string> rec)
 {
     std::map<std::string,std::string> resp;
-    if(rec["customerID"]=="1000"&&rec["password"]=="123")
+    int customerID = std::stoi(rec["customerID"]);
+    CustomerInfo info = chServer->customerMap[customerID];
+    //bug(customerID);
+    if(rec["password"]==info.password)
     {
         resp["result"]="ok";
+        (chServer->idMap[customerID])=sockfd;
+        (chServer->socketMap[sockfd])=customerID;
     }
     else
     {
@@ -80,29 +84,42 @@ void Connection::weituo(int sockfd,const std::string& recv)
 {
     std::map<std::string,std::string> resp;
     WeiTuo wt = str_to_WeiTuo(recv);
-    int result=chServer->verdict(wt,nullptr);
-    if(result==1)
+    std::string result=chServer->verdict(wt,wt.getCustomerID());
+    if(result=="ok")
     {
-        std::string msg = serializeMap(chServer->getPankou());
-        server->broadCast(msg);
+        for(auto it = chServer->socketMap.begin(); it!=chServer->socketMap.end();it++)
+        {
+            std::string msg = serializeMap(chServer->getPankou(it->second));
+            sendMsg(it->first,msg);
+        }
     }
-    else if(result==0)
+    else
     {
         resp["type"]="weituo";
         resp["result"]="error";
-        resp["msg"]="超出涨跌停限制";
+        resp["msg"]=result;
         std::string res = serializeMap(resp);
         sendMsg(sockfd,res);
     }
 }
 
+
+void Connection::sendweituo(int sockfd,const std::string& recv)
+{
+    
+}
+
 void Connection::pankou(int sockfd)
 {
-    std::string res = serializeMap(chServer->getPankou());
-    sendMsg(sockfd,res);
+    for(auto it = chServer->socketMap.begin(); it!=chServer->socketMap.end();it++)
+    {
+        std::string msg = serializeMap(chServer->getPankou(it->second));
+        sendMsg(it->first,msg);
+    }
 }
 
 void Connection::sendMsg(int sockfd, const std::string& msg)
 {
     write(sockfd, msg.c_str(), msg.size());
 }
+

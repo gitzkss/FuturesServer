@@ -1,7 +1,9 @@
 #include"cuo_he_server.h"
-CuoHeServer::CuoHeServer(double kaipanPrice, double zhangTingPrice, double dieTingPrice)
-	:kaipanPrice(kaipanPrice) , zhangTingPrice(zhangTingPrice), dieTingPrice(dieTingPrice)
+CuoHeServer::CuoHeServer(double kaipanPrice, double tingban, double baozhengjin, double shouxufei, double pointPrice)
+	:kaipanPrice(kaipanPrice), baozhengjin(baozhengjin), shouxufei(shouxufei), pointPrice(pointPrice)
 {
+	zhangTingPrice = (int)(kaipanPrice + kaipanPrice * tingban);
+	dieTingPrice = (int)(kaipanPrice - kaipanPrice * tingban);
 	buyPrice = -1;
 	buyCount = 0;
 	sellPrice = -1;
@@ -16,6 +18,17 @@ CuoHeServer::CuoHeServer(double kaipanPrice, double zhangTingPrice, double dieTi
 	wt.setCount(0);
 	buy.push_back(wt);
 	sell.push_back(wt);
+	freopen("src/customer_info.txt", "r", stdin);
+	int n;
+	std::cin >> n;
+	for (int i = 0; i < n; i++)
+	{
+		CustomerInfo cinfo;
+		std::cin >> cinfo.customerID >> cinfo.password >> cinfo.quanyi;
+		cinfo.keyong = cinfo.quanyi;
+		customerMap[cinfo.customerID] = cinfo;
+	}
+	fclose(stdin);
 };
 
 CuoHeServer::~CuoHeServer() {};
@@ -494,20 +507,39 @@ void CuoHeServer::updateState(double price)
 	zhangDieFu = (int)(zhangDieFu * 100 + 0.5) / 100.0;
 }
 
-bool CuoHeServer::verdict(WeiTuo wt, CustomerInfo* cinfo)
+std::string CuoHeServer::verdict(WeiTuo wt, int customerID)
 {
 	int price = wt.getPrice();
 	if (wt.getCount() >= 0 && (price > zhangTingPrice || price < dieTingPrice))
 	{
 		std::cout << "Forbidden!" << std::endl;
-		return 0;
+		return "超出涨跌停限制";
 	}
 	else
 	{
-		weiTuoQueue.push(wt);
-		executeWeiTuoQueue();
-		return 1;
+		CustomerInfo& c = customerMap[customerID];
+		int ok = c.receiveWeiTuo(newPrice, pointPrice, baozhengjin, shouxufei, wt);
+		if (ok==1)
+		{
+			weiTuoQueue.push(wt);
+			executeWeiTuoQueue();
+			return "ok";
+		}
+		else
+		{
+			if (ok == -1)
+				return "可用资金不足";
+			else if (ok == 0)
+				return "超出可平仓位";
+			else if (ok == -2)
+				return "撤销的委托与实际委托不匹配";
+			else if (ok == -3)
+				return "委托数量达到上限";
+			else
+				return "未知错误";
+		}
 	}
+	return "ok";
 }
 
 void CuoHeServer::printState()
@@ -609,15 +641,17 @@ std::queue<WeiTuo> CuoHeServer::getWeiTuoQueue()
 	return weiTuoQueue;
 }
 
-WeiTuo CuoHeServer::accepted(WeiTuo* wt, double price, int count)
+int CuoHeServer::accepted(WeiTuo* wt, double price, int count)
 {
-	std::cout << "accepted: " << wt->getCustomerID() << " price:" << price << " count::" << count << std::endl;
+	//std::cout << "accepted: " << wt->getCustomerID() << " price:" << price << " count::" << count << std::endl;
+	CustomerInfo& c = customerMap[wt->getCustomerID()];
+	c.acceptWeiTuo(newPrice, pointPrice, baozhengjin, shouxufei, *wt, price, count);
 	int d = wt->getCount() - count;
 	if (d < 0)
 		wt->setCount(0);
 	else
 		wt->setCount(d);
-	return 0;
+	return wt->getContractID();
 }
 
 
@@ -708,7 +742,7 @@ JiaoYiData CuoHeServer::getJiaoYiData(double price, int type, int duokai, int ko
 	return result;
 }
 
-std::map<std::string, std::string> CuoHeServer::getPankou()
+std::map<std::string, std::string> CuoHeServer::getPankou(int customerID)
 {
 	std::map<std::string, std::string>res;
 	res["type"] = "pankou";
@@ -724,6 +758,9 @@ std::map<std::string, std::string> CuoHeServer::getPankou()
 	res["waiPan"] = std::to_string(waiPan);
 	res["neiPan"] = std::to_string(neiPan);
 	res["zhangDieFu"] = std::to_string(zhangDieFu);
+	res["shouxufei"] = std::to_string((int)shouxufei);
+	res["ganggan"] = std::to_string((int)pointPrice);
+	getCustomerInfo(res, customerID);
 	std::queue<JiaoYiData> temp = jiaoYiDataQueue;
 	int i = 1;
 	while (!temp.empty())
@@ -743,5 +780,25 @@ std::map<std::string, std::string> CuoHeServer::getPankou()
 std::queue<JiaoYiData> CuoHeServer::getJiaoYiDataQueue()
 {
 	return jiaoYiDataQueue;
+}
+
+void CuoHeServer::getCustomerInfo(std::map<std::string, std::string>& res,int customerID)
+{
+	CustomerInfo c = customerMap[customerID];
+	res["quanyi"] = std::to_string(c.quanyi);
+	res["keyong"] = std::to_string(c.keyong);
+	std::vector<WeiTuo> temp = c.weituo;
+	for (int i = 0; i < temp.size(); i++)
+	{
+		res["_time" + std::to_string(i+1)] = std::to_string(temp[i].getTime());
+		res["_optype" + std::to_string(i+1)] = temp[i].getOptype();
+		res["_price" + std::to_string(i+1)] = std::to_string(temp[i].getPrice());
+		res["_count" + std::to_string(i+1)] = std::to_string(temp[i].getCount());
+	}
+	res["duo"] = std::to_string(c.chicang.getDuoCount());
+	res["kong"] = std::to_string(c.chicang.getKongCount());
+	res["avgduo"] = std::to_string(c.chicang.getAvgDuo());
+	res["avgkong"] = std::to_string(c.chicang.getAvgKong());
+	res["fengxianlv"] = std::to_string(c.fengxianlv);
 }
 

@@ -11,7 +11,6 @@
 #include <string>
 #include "cuo_he_server.h"
 #include "Server.h"
-
 class EventLoop;
 class Socket;
 class Channel;
@@ -34,6 +33,7 @@ public:
     void pankou(int sockfd);
     void sendMsg(int sockfd, const std::string& msg);
     void echo(int sockfd);
+    void sendweituo(int sockfd,const std::string& recv);
     void setDeleteConnectionCallback(std::function<void(Socket*)>);
 };
 
