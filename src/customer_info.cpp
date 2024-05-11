@@ -39,6 +39,10 @@ int CustomerInfo::verifyKaiCang(double baozhengjin, double shouxufei, WeiTuo wt)
 }
 int CustomerInfo::verifyPingCang(WeiTuo wt)
 {
+	if (weituo.size() >= 10)
+	{
+		return -1;
+	}
 	if (wt.getOptype() == "duoping")
 	{
 		if (wt.getCount() > chicang.getKepingDuoCount())
@@ -91,6 +95,8 @@ int CustomerInfo::receiveWeiTuo(double newPrice,int pointPrice, double baozhengj
 		//0 超出可平仓位
 		if (ok == 0)
 			return 0;
+		else if (ok == -1)
+			return -3;
 		if (wt.getOptype() == "duoping")
 			chicang.removeKePingDuo(wt.getCount());
 		else
