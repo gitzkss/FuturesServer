@@ -505,6 +505,10 @@ void CuoHeServer::updateState(double price)
 	}
 	zhangDieFu = (newPrice - kaipanPrice) / kaipanPrice*100;
 	zhangDieFu = (int)(zhangDieFu * 100 + 0.5) / 100.0;
+	for (auto it = customerMap.begin(); it != customerMap.end(); it++)
+	{
+		it->second.update(newPrice, pointPrice);
+	}
 }
 
 std::string CuoHeServer::verdict(WeiTuo wt, int customerID)
